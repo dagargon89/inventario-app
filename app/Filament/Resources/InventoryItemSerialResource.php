@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\InventoryItemSerialResource\Pages;
 use App\Filament\Resources\InventoryItemSerialResource\RelationManagers;
 use App\Models\InventoryItemSerial;
+use App\Traits\HasSerialNumber;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -15,6 +16,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class InventoryItemSerialResource extends Resource
 {
+    use HasSerialNumber;
+
     protected static ?string $model = InventoryItemSerial::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-qr-code';
@@ -35,11 +38,11 @@ class InventoryItemSerialResource extends Resource
             ->schema([
                 Forms\Components\TextInput::make('serial_number')
                     ->label('Número de Serie')
-                    ->placeholder('Ej: SN12345678')
-                    ->required()
+                    ->placeholder('Se generará automáticamente')
                     ->maxLength(255)
                     ->unique(ignoreRecord: true)
-                    ->helperText('Número único de serie del artículo'),
+                    ->helperText('Deja vacío para generar automáticamente')
+                    ->disabled(),
                 Forms\Components\Select::make('status')
                     ->label('Estado')
                     ->options([
