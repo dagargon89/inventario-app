@@ -12,6 +12,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Auth;
 
 class InventoryRequestResource extends Resource
 {
@@ -31,65 +32,104 @@ class InventoryRequestResource extends Resource
 
     public static function form(Form $form): Form
     {
+        $user = Auth::user();
+        // Por ahora, asumimos que el usuario con ID 1 es admin
+        $isAdmin = $user->id === 1;
+        $isSolicitante = !$isAdmin;
+
         return $form
             ->schema([
-                Forms\Components\TextInput::make('event_name')
-                    ->label('Nombre del Evento')
-                    ->placeholder('Ej: Conferencia Anual de Tecnología')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\DatePicker::make('event_date_start')
-                    ->label('Fecha de Inicio del Evento')
-                    ->required()
-                    ->displayFormat('d/m/Y'),
-                Forms\Components\DatePicker::make('event_date_end')
-                    ->label('Fecha de Fin del Evento')
-                    ->required()
-                    ->displayFormat('d/m/Y'),
-                Forms\Components\Select::make('status')
-                    ->label('Estado')
-                    ->options([
-                        'pending' => 'Pendiente',
-                        'approved' => 'Aprobada',
-                        'dispatched' => 'Despachada',
-                        'completed' => 'Completada',
-                        'cancelled' => 'Cancelada',
+                Forms\Components\Section::make('Información del Evento')
+                    ->schema([
+                        Forms\Components\TextInput::make('event_name')
+                            ->label('Nombre del Evento')
+                            ->placeholder('Ej: Conferencia Anual de Tecnología')
+                            ->required()
+                            ->maxLength(255),
+                        Forms\Components\DatePicker::make('event_date_start')
+                            ->label('Fecha de Inicio del Evento')
+                            ->required()
+                            ->displayFormat('d/m/Y'),
+                        Forms\Components\DatePicker::make('event_date_end')
+                            ->label('Fecha de Fin del Evento')
+                            ->required()
+                            ->displayFormat('d/m/Y'),
                     ])
-                    ->default('pending')
-                    ->required(),
-                Forms\Components\Textarea::make('notes_requester')
-                    ->label('Notas del Solicitante')
-                    ->placeholder('Detalles adicionales de la solicitud')
-                    ->columnSpanFull(),
-                Forms\Components\Textarea::make('notes_approver')
-                    ->label('Notas del Aprobador')
-                    ->placeholder('Comentarios del aprobador')
-                    ->columnSpanFull(),
-                Forms\Components\DateTimePicker::make('approved_at')
-                    ->label('Fecha de Aprobación')
-                    ->displayFormat('d/m/Y H:i'),
-                Forms\Components\DateTimePicker::make('dispatched_at')
-                    ->label('Fecha de Despacho')
-                    ->displayFormat('d/m/Y H:i'),
-                Forms\Components\DateTimePicker::make('completed_at')
-                    ->label('Fecha de Completado')
-                    ->displayFormat('d/m/Y H:i'),
+                    ->columns(3),
+
+                Forms\Components\Section::make('Detalles de la Solicitud')
+                    ->schema([
+                        Forms\Components\Textarea::make('notes_requester')
+                            ->label('Notas del Solicitante')
+                            ->placeholder('Detalles adicionales de la solicitud, justificación, etc.')
+                            ->required()
+                            ->rows(3),
+                    ])
+                    ->collapsible()
+                    ->collapsed(),
+
+                // Campos solo para administradores
+                Forms\Components\Section::make('Gestión Administrativa')
+                    ->schema([
+                        Forms\Components\Select::make('status')
+                            ->label('Estado')
+                            ->options([
+                                'pending' => 'Pendiente',
+                                'approved' => 'Aprobada',
+                                'dispatched' => 'Despachada',
+                                'completed' => 'Completada',
+                                'cancelled' => 'Cancelada',
+                            ])
+                            ->default('pending')
+                            ->required()
+                            ->visible($isAdmin),
+                        Forms\Components\Textarea::make('notes_approver')
+                            ->label('Notas del Aprobador')
+                            ->placeholder('Comentarios del aprobador')
+                            ->rows(3)
+                            ->visible($isAdmin),
+                        Forms\Components\DateTimePicker::make('approved_at')
+                            ->label('Fecha de Aprobación')
+                            ->displayFormat('d/m/Y H:i')
+                            ->visible($isAdmin),
+                        Forms\Components\DateTimePicker::make('dispatched_at')
+                            ->label('Fecha de Despacho')
+                            ->displayFormat('d/m/Y H:i')
+                            ->visible($isAdmin),
+                        Forms\Components\DateTimePicker::make('completed_at')
+                            ->label('Fecha de Completado')
+                            ->displayFormat('d/m/Y H:i')
+                            ->visible($isAdmin),
+                        Forms\Components\Select::make('approved_by_id')
+                            ->label('Aprobado Por')
+                            ->relationship('approvedBy', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->visible($isAdmin),
+                    ])
+                    ->columns(2)
+                    ->visible($isAdmin)
+                    ->collapsible()
+                    ->collapsed(),
+
+                // Campo de usuario (automático para solicitantes)
                 Forms\Components\Select::make('user_id')
                     ->label('Solicitante')
                     ->relationship('user', 'name')
                     ->searchable()
                     ->preload()
-                    ->required(),
-                Forms\Components\Select::make('approved_by_id')
-                    ->label('Aprobado Por')
-                    ->relationship('approvedBy', 'name')
-                    ->searchable()
-                    ->preload(),
+                    ->required()
+                    ->default($user->id)
+                    ->disabled($isSolicitante)
+                    ->visible($isAdmin),
             ]);
     }
 
     public static function table(Table $table): Table
     {
+        $user = Auth::user();
+        $isAdmin = $user->id === 1;
+
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('event_name')
@@ -123,10 +163,12 @@ class InventoryRequestResource extends Resource
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('Solicitante')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->visible($isAdmin),
                 Tables\Columns\TextColumn::make('approvedBy.name')
                     ->label('Aprobado Por')
-                    ->searchable(),
+                    ->searchable()
+                    ->visible($isAdmin),
                 Tables\Columns\TextColumn::make('inventoryRequestItems_count')
                     ->label('Artículos')
                     ->counts('inventoryRequestItems')
@@ -151,7 +193,8 @@ class InventoryRequestResource extends Resource
                     ->label('Solicitante')
                     ->relationship('user', 'name')
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->visible($isAdmin),
                 Tables\Filters\Filter::make('event_date_start')
                     ->label('Fecha del Evento')
                     ->form([
@@ -184,13 +227,20 @@ class InventoryRequestResource extends Resource
                         ->label('Eliminar Seleccionados'),
                 ]),
             ])
-            ->defaultSort('created_at', 'desc');
+            ->defaultSort('created_at', 'desc')
+            ->modifyQueryUsing(function (Builder $query) use ($user, $isAdmin) {
+                // Si no es admin, solo mostrar sus propias solicitudes
+                if (!$isAdmin) {
+                    $query->where('user_id', $user->id);
+                }
+                return $query;
+            });
     }
 
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\ItemsRelationManager::class,
         ];
     }
 
@@ -199,6 +249,7 @@ class InventoryRequestResource extends Resource
         return [
             'index' => Pages\ListInventoryRequests::route('/'),
             'create' => Pages\CreateInventoryRequest::route('/create'),
+            'view' => Pages\ViewInventoryRequest::route('/{record}'),
             'edit' => Pages\EditInventoryRequest::route('/{record}/edit'),
         ];
     }
