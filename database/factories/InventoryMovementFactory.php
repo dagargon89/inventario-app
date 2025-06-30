@@ -25,21 +25,21 @@ class InventoryMovementFactory extends Factory
     public function definition(): array
     {
         return [
-            'type' => fake()->randomElement(["['inbound'",""]),
-            'quantity' => fake()->randomFloat(4, 0, 99999999.9999),
-            'quantity_before' => fake()->randomFloat(4, 0, 99999999.9999),
-            'quantity_after' => fake()->randomFloat(4, 0, 99999999.9999),
-            'unit_cost' => fake()->randomFloat(4, 0, 99999999.9999),
-            'reason' => fake()->word(),
-            'reference_document' => fake()->word(),
-            'notes' => fake()->text(),
-            'lot_number' => fake()->regexify('[A-Za-z0-9]{100}'),
-            'expires_at' => fake()->date(),
-            'created_at' => fake()->dateTime(),
+            'type' => fake()->randomElement(['inbound', 'outbound', 'transfer', 'adjustment']),
+            'quantity' => fake()->randomFloat(4, 1, 100),
+            'quantity_before' => fake()->randomFloat(4, 0, 50),
+            'quantity_after' => fake()->randomFloat(4, 0, 100),
+            'unit_cost' => fake()->randomFloat(2, 10, 1000),
+            'reason' => fake()->randomElement(['Compra', 'Venta', 'Ajuste', 'Transferencia']),
+            'reference_document' => fake()->regexify('[A-Z]{2}-[0-9]{4}'),
+            'notes' => fake()->sentence(),
+            'lot_number' => fake()->regexify('LOT-[0-9]{3}'),
+            'expires_at' => fake()->dateTimeBetween('now', '+2 years'),
+            'created_at' => fake()->dateTimeBetween('-30 days', 'now'),
             'inventory_item_id' => InventoryItem::factory(),
             'warehouse_id' => Warehouse::factory(),
             'warehouse_bin_id' => WarehouseBin::factory(),
-            'nullable_id' => User::factory(),
+            'user_id' => User::factory(),
         ];
     }
 }

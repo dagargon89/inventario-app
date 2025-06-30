@@ -21,13 +21,16 @@ class InventoryItemFactory extends Factory
     public function definition(): array
     {
         return [
-            'sku' => fake()->regexify('[A-Za-z0-9]{100}'),
-            'name' => fake()->name(),
-            'description' => fake()->text(),
-            'unit_of_measure' => fake()->regexify('[A-Za-z0-9]{50}'),
-            'status' => fake()->randomElement(["['active'",""]),
-            'tracking_type' => fake()->randomElement(["['quantity'",""]),
-            'attributes' => '{}',
+            'sku' => fake()->regexify('[A-Z]{3}-[0-9]{3}'),
+            'name' => fake()->words(3, true),
+            'description' => fake()->sentence(),
+            'unit_of_measure' => fake()->randomElement(['Unidad', 'Pieza', 'Caja', 'Set', 'Resma', 'Kg', 'Litro']),
+            'status' => fake()->randomElement(['active', 'inactive']),
+            'tracking_type' => fake()->randomElement(['quantity', 'serial']),
+            'attributes' => json_encode([
+                'marca' => fake()->company(),
+                'modelo' => fake()->regexify('[A-Z]{2}[0-9]{3}'),
+            ]),
         ];
     }
 }

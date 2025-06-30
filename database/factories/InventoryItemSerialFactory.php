@@ -23,10 +23,10 @@ class InventoryItemSerialFactory extends Factory
     public function definition(): array
     {
         return [
-            'serial_number' => fake()->word(),
-            'status' => fake()->randomElement(["['in_stock'",""]),
+            'serial_number' => fake()->regexify('[A-Z]{2}[0-9]{8}'),
+            'status' => fake()->randomElement(['in_stock', 'out_of_stock', 'reserved']),
             'inventory_item_id' => InventoryItem::factory(),
-            'nullable_id' => WarehouseBin::factory(),
+            'warehouse_bin_id' => WarehouseBin::factory(),
         ];
     }
 }

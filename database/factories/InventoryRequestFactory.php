@@ -22,17 +22,17 @@ class InventoryRequestFactory extends Factory
     public function definition(): array
     {
         return [
-            'event_name' => fake()->word(),
-            'event_date_start' => fake()->date(),
-            'event_date_end' => fake()->date(),
-            'status' => fake()->randomElement(["['pending'",""]),
-            'notes_requester' => fake()->text(),
-            'notes_approver' => fake()->text(),
-            'approved_at' => fake()->dateTime(),
-            'dispatched_at' => fake()->dateTime(),
-            'completed_at' => fake()->dateTime(),
+            'event_name' => fake()->words(3, true),
+            'event_date_start' => fake()->dateTimeBetween('now', '+30 days'),
+            'event_date_end' => fake()->dateTimeBetween('+31 days', '+60 days'),
+            'status' => fake()->randomElement(['pending', 'approved', 'dispatched', 'completed', 'cancelled']),
+            'notes_requester' => fake()->sentence(),
+            'notes_approver' => fake()->optional()->sentence(),
+            'approved_at' => fake()->optional()->dateTimeBetween('-30 days', 'now'),
+            'dispatched_at' => fake()->optional()->dateTimeBetween('-20 days', 'now'),
+            'completed_at' => fake()->optional()->dateTimeBetween('-10 days', 'now'),
             'user_id' => User::factory(),
-            'approved_by:nullable_id' => User::factory(),
+            'approved_by_id' => fake()->optional()->randomElement([User::factory()]),
         ];
     }
 }
