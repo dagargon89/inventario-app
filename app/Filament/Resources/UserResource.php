@@ -50,6 +50,11 @@ class UserResource extends Resource
                     ->password()
                     ->dehydrated(fn ($state) => filled($state))
                     ->required(fn (string $context): bool => $context === 'create'),
+                Forms\Components\Select::make('roles')
+                    ->relationship('roles', 'name')
+                    ->multiple()
+                    ->preload()
+                    ->searchable(),
                 Forms\Components\DateTimePicker::make('email_verified_at')
                     ->label('Correo Verificado')
                     ->displayFormat('d/m/Y H:i'),
