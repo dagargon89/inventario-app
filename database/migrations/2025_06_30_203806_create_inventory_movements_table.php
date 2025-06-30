@@ -27,7 +27,7 @@ return new class extends Migration
             $table->foreignId('inventory_item_id');
             $table->foreignId('warehouse_id');
             $table->foreignId('warehouse_bin_id');
-            $table->foreignId('nullable_id');
+            $table->foreignId('user_id');
         });
     }
 

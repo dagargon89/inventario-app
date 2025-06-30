@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('serial_number')->unique();
             $table->enum('status', ['in_stock', 'out_of_stock', 'reserved'])->default('in_stock');
             $table->foreignId('inventory_item_id');
-            $table->foreignId('nullable_id');
+            $table->foreignId('warehouse_bin_id');
             $table->timestamps();
         });
     }

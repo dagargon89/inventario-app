@@ -23,7 +23,7 @@ return new class extends Migration
             $table->timestamp('dispatched_at')->nullable();
             $table->timestamp('completed_at')->nullable();
             $table->foreignId('user_id');
-            $table->foreignId('approved_by:nullable_id');
+            $table->foreignId('approved_by_id')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

@@ -28,7 +28,7 @@ class InventoryRequest extends Model
         'dispatched_at',
         'completed_at',
         'user_id',
-        'approved_by:nullable_id',
+        'approved_by_id',
     ];
 
     /**
@@ -46,7 +46,7 @@ class InventoryRequest extends Model
             'dispatched_at' => 'timestamp',
             'completed_at' => 'timestamp',
             'user_id' => 'integer',
-            'approved_by:nullable_id' => 'integer',
+            'approved_by_id' => 'integer',
         ];
     }
 
@@ -57,7 +57,7 @@ class InventoryRequest extends Model
 
     public function approvedBy(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'approved_by_id');
     }
 
     public function inventoryRequestItems(): HasMany

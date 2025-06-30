@@ -36,7 +36,7 @@ class InventoryMovement extends Model
         'inventory_item_id',
         'warehouse_id',
         'warehouse_bin_id',
-        'nullable_id',
+        'user_id',
     ];
 
     /**
@@ -57,7 +57,7 @@ class InventoryMovement extends Model
             'inventory_item_id' => 'integer',
             'warehouse_id' => 'integer',
             'warehouse_bin_id' => 'integer',
-            'nullable_id' => 'integer',
+            'user_id' => 'integer',
         ];
     }
 
@@ -76,8 +76,8 @@ class InventoryMovement extends Model
         return $this->belongsTo(WarehouseBin::class);
     }
 
-    public function $this->belongsTo(User::class)able(): BelongsTo
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

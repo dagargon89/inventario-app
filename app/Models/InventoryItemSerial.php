@@ -19,7 +19,7 @@ class InventoryItemSerial extends Model
         'serial_number',
         'status',
         'inventory_item_id',
-        'nullable_id',
+        'warehouse_bin_id',
     ];
 
     /**
@@ -32,7 +32,7 @@ class InventoryItemSerial extends Model
         return [
             'id' => 'integer',
             'inventory_item_id' => 'integer',
-            'nullable_id' => 'integer',
+            'warehouse_bin_id' => 'integer',
         ];
     }
 
@@ -41,12 +41,12 @@ class InventoryItemSerial extends Model
         return $this->belongsTo(InventoryItem::class);
     }
 
-    public function $this->belongsTo(WarehouseBin::class)able(): BelongsTo
+    public function warehouseBin(): BelongsTo
     {
         return $this->belongsTo(WarehouseBin::class);
     }
 
-    public function $this->belongsTo(InventoryRequestItem::class)able(): BelongsTo
+    public function inventoryRequestItem(): BelongsTo
     {
         return $this->belongsTo(InventoryRequestItem::class);
     }
