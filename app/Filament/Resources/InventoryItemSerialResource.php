@@ -23,21 +23,45 @@ class InventoryItemSerialResource extends Resource
 
     protected static ?int $navigationSort = 3;
 
+    protected static ?string $modelLabel = 'Número de Serie';
+
+    protected static ?string $pluralModelLabel = 'Números de Serie';
+
+    protected static ?string $navigationLabel = 'Números de Serie';
+
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 Forms\Components\TextInput::make('serial_number')
+                    ->label('Número de Serie')
+                    ->placeholder('Ej: SN12345678')
                     ->required()
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('status')
+                    ->maxLength(255)
+                    ->unique(ignoreRecord: true)
+                    ->helperText('Número único de serie del artículo'),
+                Forms\Components\Select::make('status')
+                    ->label('Estado')
+                    ->options([
+                        'in_stock' => 'En Stock',
+                        'out_of_stock' => 'Fuera de Stock',
+                        'reserved' => 'Reservado',
+                    ])
+                    ->default('in_stock')
                     ->required(),
                 Forms\Components\Select::make('inventory_item_id')
+                    ->label('Artículo')
                     ->relationship('inventoryItem', 'name')
-                    ->required(),
-                Forms\Components\TextInput::make('nullable_id')
+                    ->searchable()
+                    ->preload()
                     ->required()
-                    ->numeric(),
+                    ->helperText('Artículo al que pertenece este número de serie'),
+                Forms\Components\Select::make('warehouse_bin_id')
+                    ->label('Ubicación')
+                    ->relationship('warehouseBin', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->required(),
             ]);
     }
 
@@ -46,34 +70,73 @@ class InventoryItemSerialResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('serial_number')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('status'),
-                Tables\Columns\TextColumn::make('inventoryItem.name')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('nullable_id')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
+                    ->label('Número de Serie')
+                    ->searchable()
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
+                    ->copyable(),
+                Tables\Columns\BadgeColumn::make('status')
+                    ->label('Estado')
+                    ->colors([
+                        'success' => 'in_stock',
+                        'danger' => 'out_of_stock',
+                        'warning' => 'reserved',
+                    ])
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'in_stock' => 'En Stock',
+                        'out_of_stock' => 'Fuera de Stock',
+                        'reserved' => 'Reservado',
+                    }),
+                Tables\Columns\TextColumn::make('inventoryItem.name')
+                    ->label('Artículo')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('inventoryItem.sku')
+                    ->label('SKU')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('warehouseBin.name')
+                    ->label('Ubicación')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('warehouseBin.warehouse.name')
+                    ->label('Almacén')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Fecha de Registro')
+                    ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('status')
+                    ->label('Estado')
+                    ->options([
+                        'in_stock' => 'En Stock',
+                        'out_of_stock' => 'Fuera de Stock',
+                        'reserved' => 'Reservado',
+                    ]),
+                Tables\Filters\SelectFilter::make('inventory_item_id')
+                    ->label('Artículo')
+                    ->relationship('inventoryItem', 'name')
+                    ->searchable()
+                    ->preload(),
+                Tables\Filters\SelectFilter::make('warehouse_bin_id')
+                    ->label('Ubicación')
+                    ->relationship('warehouseBin', 'name')
+                    ->searchable()
+                    ->preload(),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->label('Editar'),
+                Tables\Actions\ViewAction::make()
+                    ->label('Ver'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->label('Eliminar Seleccionados'),
                 ]),
-            ]);
+            ])
+            ->defaultSort('created_at', 'desc');
     }
 
     public static function getRelations(): array

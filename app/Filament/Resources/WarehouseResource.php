@@ -23,17 +23,29 @@ class WarehouseResource extends Resource
 
     protected static ?int $navigationSort = 1;
 
+    protected static ?string $modelLabel = 'Almacén';
+
+    protected static ?string $pluralModelLabel = 'Almacenes';
+
+    protected static ?string $navigationLabel = 'Almacenes';
+
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 Forms\Components\TextInput::make('name')
+                    ->label('Nombre del Almacén')
+                    ->placeholder('Ej: Almacén Principal')
                     ->required()
                     ->maxLength(255),
                 Forms\Components\Textarea::make('location_description')
+                    ->label('Descripción de Ubicación')
+                    ->placeholder('Ej: Edificio A, Planta Baja, Zona Industrial Norte')
                     ->columnSpanFull(),
                 Forms\Components\Toggle::make('is_active')
-                    ->required(),
+                    ->label('Almacén Activo')
+                    ->default(true)
+                    ->helperText('Indica si el almacén está en operación'),
             ]);
     }
 
@@ -42,33 +54,50 @@ class WarehouseResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->searchable(),
-                Tables\Columns\IconColumn::make('is_active')
-                    ->boolean(),
+                    ->label('Nombre')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('location_description')
+                    ->label('Ubicación')
+                    ->searchable()
+                    ->limit(50),
+                Tables\Columns\BadgeColumn::make('is_active')
+                    ->label('Estado')
+                    ->colors([
+                        'success' => true,
+                        'danger' => false,
+                    ])
+                    ->formatStateUsing(fn (bool $state): string => $state ? 'Activo' : 'Inactivo'),
+                Tables\Columns\TextColumn::make('warehouseBins_count')
+                    ->label('Ubicaciones')
+                    ->counts('warehouseBins')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('deleted_at')
-                    ->dateTime()
+                    ->label('Fecha de Creación')
+                    ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                Tables\Filters\TernaryFilter::make('is_active')
+                    ->label('Estado')
+                    ->placeholder('Todos los almacenes')
+                    ->trueLabel('Solo activos')
+                    ->falseLabel('Solo inactivos'),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->label('Editar'),
+                Tables\Actions\ViewAction::make()
+                    ->label('Ver'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->label('Eliminar Seleccionados'),
                 ]),
-            ]);
+            ])
+            ->defaultSort('name');
     }
 
     public static function getRelations(): array

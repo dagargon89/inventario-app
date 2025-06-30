@@ -23,17 +23,31 @@ class WarehouseBinResource extends Resource
 
     protected static ?int $navigationSort = 2;
 
+    protected static ?string $modelLabel = 'Ubicación';
+
+    protected static ?string $pluralModelLabel = 'Ubicaciones';
+
+    protected static ?string $navigationLabel = 'Ubicaciones';
+
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 Forms\Components\TextInput::make('name')
+                    ->label('Código de Ubicación')
+                    ->placeholder('Ej: A-01-01')
                     ->required()
-                    ->maxLength(100),
+                    ->maxLength(255)
+                    ->helperText('Código único para identificar la ubicación'),
                 Forms\Components\Textarea::make('description')
+                    ->label('Descripción')
+                    ->placeholder('Ej: Estante A, Nivel 1, Posición 1 - Equipos Electrónicos')
                     ->columnSpanFull(),
                 Forms\Components\Select::make('warehouse_id')
+                    ->label('Almacén')
                     ->relationship('warehouse', 'name')
+                    ->searchable()
+                    ->preload()
                     ->required(),
             ]);
     }
@@ -43,30 +57,47 @@ class WarehouseBinResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->searchable(),
+                    ->label('Código')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('description')
+                    ->label('Descripción')
+                    ->searchable()
+                    ->limit(50),
                 Tables\Columns\TextColumn::make('warehouse.name')
-                    ->numeric()
+                    ->label('Almacén')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('inventoryStocks_count')
+                    ->label('Artículos')
+                    ->counts('inventoryStocks')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
+                    ->label('Fecha de Creación')
+                    ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('warehouse_id')
+                    ->label('Almacén')
+                    ->relationship('warehouse', 'name')
+                    ->searchable()
+                    ->preload(),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->label('Editar'),
+                Tables\Actions\ViewAction::make()
+                    ->label('Ver'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->label('Eliminar Seleccionados'),
                 ]),
-            ]);
+            ])
+            ->defaultSort('name');
     }
 
     public static function getRelations(): array

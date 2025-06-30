@@ -23,24 +23,42 @@ class SupplierResource extends Resource
 
     protected static ?int $navigationSort = 1;
 
+    protected static ?string $modelLabel = 'Proveedor';
+
+    protected static ?string $pluralModelLabel = 'Proveedores';
+
+    protected static ?string $navigationLabel = 'Proveedores';
+
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 Forms\Components\TextInput::make('name')
+                    ->label('Nombre del Proveedor')
+                    ->placeholder('Ej: Tecnología Avanzada S.A.')
                     ->required()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('contact_person')
+                    ->label('Persona de Contacto')
+                    ->placeholder('Ej: Ing. Roberto Martínez')
                     ->maxLength(255),
                 Forms\Components\TextInput::make('email')
+                    ->label('Correo Electrónico')
                     ->email()
+                    ->placeholder('Ej: ventas@proveedor.com')
                     ->maxLength(255),
                 Forms\Components\TextInput::make('phone')
+                    ->label('Teléfono')
                     ->tel()
-                    ->maxLength(50),
+                    ->placeholder('Ej: +52 55 1234 5678')
+                    ->maxLength(255),
                 Forms\Components\Textarea::make('address')
+                    ->label('Dirección')
+                    ->placeholder('Ej: Av. Insurgentes Sur 1234, Col. Del Valle, CDMX')
                     ->columnSpanFull(),
                 Forms\Components\Textarea::make('notes')
+                    ->label('Notas')
+                    ->placeholder('Información adicional sobre el proveedor')
                     ->columnSpanFull(),
             ]);
     }
@@ -50,37 +68,48 @@ class SupplierResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->searchable(),
+                    ->label('Nombre')
+                    ->searchable()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('contact_person')
+                    ->label('Contacto')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('email')
-                    ->searchable(),
+                    ->label('Correo')
+                    ->searchable()
+                    ->copyable(),
                 Tables\Columns\TextColumn::make('phone')
-                    ->searchable(),
+                    ->label('Teléfono')
+                    ->searchable()
+                    ->copyable(),
+                Tables\Columns\TextColumn::make('inventoryItems_count')
+                    ->label('Artículos')
+                    ->counts('inventoryItems')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('deleted_at')
-                    ->dateTime()
+                    ->label('Fecha de Registro')
+                    ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                Tables\Filters\Filter::make('has_items')
+                    ->label('Con Artículos')
+                    ->query(fn (Builder $query): Builder => $query->whereHas('inventoryItems')),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->label('Editar'),
+                Tables\Actions\ViewAction::make()
+                    ->label('Ver'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->label('Eliminar Seleccionados'),
                 ]),
-            ]);
+            ])
+            ->defaultSort('name');
     }
 
     public static function getRelations(): array
