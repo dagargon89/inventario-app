@@ -1,0 +1,119 @@
+# Archivo de Definición de Blueprint para el Sistema de Inventarios
+# Uso: Ejecutar `php artisan blueprint:build` en la raíz del proyecto Laravel.
+# Esto generará las migraciones y los modelos Eloquent con sus relaciones.
+
+models:
+
+  # --------------------------------------------------
+  # Módulo de Proveedores
+  # --------------------------------------------------
+  Supplier:
+    name: string
+    contact_person: string nullable
+    email: string nullable
+    phone: string:50 nullable
+    address: text nullable
+    notes: text nullable
+    softDeletes
+    relationships:
+      belongsToMany: InventoryItem
+
+  # --------------------------------------------------
+  # Módulo de Almacenes y Ubicaciones Físicas
+  # --------------------------------------------------
+  Warehouse:
+    name: string
+    location_description: text nullable
+    is_active: boolean default:true
+    softDeletes
+    relationships:
+      hasMany: WarehouseBin
+
+  WarehouseBin:
+    # FK a Warehouse se define en la relación
+    name: string:100
+    description: text nullable
+    relationships:
+      belongsTo: Warehouse
+      hasMany: InventoryStock, InventoryMovement
+
+  # --------------------------------------------------
+  # Módulo de Catálogo de Productos (Insumos)
+  # --------------------------------------------------
+  InventoryItem:
+    sku: string:100 unique
+    name: string
+    description: text nullable
+    unit_of_measure: string:50
+    status: enum:['active', 'discontinued', 'archived'] default:active
+    tracking_type: enum:['quantity', 'serial_number'] default:quantity
+    attributes: json nullable
+    softDeletes
+    relationships:
+      belongsToMany: Supplier
+      hasMany: InventoryItemSerial, InventoryStock, InventoryMovement, InventoryRequestItem
+
+  InventoryItemSerial:
+    # FK a InventoryItem se define en la relación
+    serial_number: string unique
+    status: enum:['in_stock', 'on_loan', 'in_maintenance', 'retired'] default:in_stock
+    relationships:
+      belongsTo: InventoryItem, WarehouseBin:nullable, InventoryRequestItem:nullable
+
+  # --------------------------------------------------
+  # Módulo de Control de Stock y Movimientos
+  # --------------------------------------------------
+  InventoryStock:
+    quantity: decimal:12,4 default:0.00
+    quantity_reserved: decimal:12,4 default:0.00
+    low_stock_threshold: decimal:12,4 nullable
+    last_movement_at: timestamp nullable
+    relationships:
+      belongsTo: InventoryItem, WarehouseBin
+
+  InventoryMovement:
+    type: enum:['inbound', 'outbound', 'adjustment', 'initial']
+    quantity: decimal:12,4
+    quantity_before: decimal:12,4
+    quantity_after: decimal:12,4
+    unit_cost: decimal:12,4 nullable
+    reason: string nullable
+    reference_document: string nullable
+    notes: text nullable
+    lot_number: string:100 nullable
+    expires_at: date nullable
+    # Usamos timestamps:false y definimos created_at manualmente para un log inmutable.
+    timestamps: false
+    created_at: timestamp
+    relationships:
+      belongsTo: InventoryItem, Warehouse, WarehouseBin, User:nullable
+
+  # --------------------------------------------------
+  # Módulo de Solicitudes, Préstamos y Devoluciones
+  # --------------------------------------------------
+  InventoryRequest:
+    event_name: string
+    event_date_start: date
+    event_date_end: date
+    status: enum:['pending', 'approved', 'rejected', 'dispatched', 'partially_returned', 'completed', 'cancelled'] default:pending
+    notes_requester: text nullable
+    notes_approver: text nullable
+    approved_at: timestamp nullable
+    dispatched_at: timestamp nullable
+    completed_at: timestamp nullable
+    softDeletes
+    relationships:
+      # Blueprint infiere user_id. Para el segundo FK a la misma tabla, se nombra la relación.
+      belongsTo: User, User:approved_by:nullable
+      hasMany: InventoryRequestItem
+
+  InventoryRequestItem:
+    quantity_requested: decimal:12,4
+    quantity_dispatched: decimal:12,4 default:0
+    quantity_returned: decimal:12,4 default:0
+    quantity_missing: decimal:12,4 default:0
+    quantity_damaged: decimal:12,4 default:0
+    notes: text nullable
+    relationships:
+      belongsTo: InventoryRequest, InventoryItem
+      hasMany: InventoryItemSerial

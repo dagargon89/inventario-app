@@ -1,0 +1,40 @@
+created:
+    - database/factories/SupplierFactory.php
+    - database/factories/WarehouseFactory.php
+    - database/factories/WarehouseBinFactory.php
+    - database/factories/InventoryItemFactory.php
+    - database/factories/InventoryItemSerialFactory.php
+    - database/factories/InventoryStockFactory.php
+    - database/factories/InventoryMovementFactory.php
+    - database/factories/InventoryRequestFactory.php
+    - database/factories/InventoryRequestItemFactory.php
+    - database/migrations/2025_06_30_203800_create_suppliers_table.php
+    - database/migrations/2025_06_30_203801_create_warehouses_table.php
+    - database/migrations/2025_06_30_203802_create_warehouse_bins_table.php
+    - database/migrations/2025_06_30_203803_create_inventory_items_table.php
+    - database/migrations/2025_06_30_203804_create_inventory_item_serials_table.php
+    - database/migrations/2025_06_30_203805_create_inventory_stocks_table.php
+    - database/migrations/2025_06_30_203806_create_inventory_movements_table.php
+    - database/migrations/2025_06_30_203807_create_inventory_requests_table.php
+    - database/migrations/2025_06_30_203808_create_inventory_request_items_table.php
+    - database/migrations/2025_06_30_203809_create_inventory_item_supplier_table.php
+    - app/Models/Supplier.php
+    - app/Models/Warehouse.php
+    - app/Models/WarehouseBin.php
+    - app/Models/InventoryItem.php
+    - app/Models/InventoryItemSerial.php
+    - app/Models/InventoryStock.php
+    - app/Models/InventoryMovement.php
+    - app/Models/InventoryRequest.php
+    - app/Models/InventoryRequestItem.php
+models:
+    User: { name: string, email: string, email_verified_at: 'timestamp nullable', password: string, remember_token: 'string:100 nullable' }
+    Supplier: { name: string, contact_person: 'string nullable', email: 'string nullable', phone: 'string:50 nullable', address: 'text nullable', notes: 'text nullable', softdeletes: softDeletes, relationships: { belongsToMany: InventoryItem } }
+    Warehouse: { name: string, location_description: 'text nullable', is_active: 'boolean default:true', softdeletes: softDeletes, relationships: { hasMany: WarehouseBin } }
+    WarehouseBin: { name: 'string:100', description: 'text nullable', relationships: { belongsTo: Warehouse, hasMany: 'InventoryStock, InventoryMovement' } }
+    InventoryItem: { sku: 'string:100 unique', name: string, description: 'text nullable', unit_of_measure: 'string:50', status: "enum:['active', 'discontinued', 'archived'] default:active", tracking_type: "enum:['quantity', 'serial_number'] default:quantity", attributes: 'json nullable', softdeletes: softDeletes, relationships: { belongsToMany: Supplier, hasMany: 'InventoryItemSerial, InventoryStock, InventoryMovement, InventoryRequestItem' } }
+    InventoryItemSerial: { serial_number: 'string unique', status: "enum:['in_stock', 'on_loan', 'in_maintenance', 'retired'] default:in_stock", relationships: { belongsTo: 'InventoryItem, WarehouseBin:nullable, InventoryRequestItem:nullable' } }
+    InventoryStock: { quantity: 'decimal:12,4 default:0.00', quantity_reserved: 'decimal:12,4 default:0.00', low_stock_threshold: 'decimal:12,4 nullable', last_movement_at: 'timestamp nullable', relationships: { belongsTo: 'InventoryItem, WarehouseBin' } }
+    InventoryMovement: { type: "enum:['inbound', 'outbound', 'adjustment', 'initial']", quantity: 'decimal:12,4', quantity_before: 'decimal:12,4', quantity_after: 'decimal:12,4', unit_cost: 'decimal:12,4 nullable', reason: 'string nullable', reference_document: 'string nullable', notes: 'text nullable', lot_number: 'string:100 nullable', expires_at: 'date nullable', timestamps: false, created_at: timestamp, relationships: { belongsTo: 'InventoryItem, Warehouse, WarehouseBin, User:nullable' } }
+    InventoryRequest: { event_name: string, event_date_start: date, event_date_end: date, status: "enum:['pending', 'approved', 'rejected', 'dispatched', 'partially_returned', 'completed', 'cancelled'] default:pending", notes_requester: 'text nullable', notes_approver: 'text nullable', approved_at: 'timestamp nullable', dispatched_at: 'timestamp nullable', completed_at: 'timestamp nullable', softdeletes: softDeletes, relationships: { belongsTo: 'User, User:approved_by:nullable', hasMany: InventoryRequestItem } }
+    InventoryRequestItem: { quantity_requested: 'decimal:12,4', quantity_dispatched: 'decimal:12,4 default:0', quantity_returned: 'decimal:12,4 default:0', quantity_missing: 'decimal:12,4 default:0', quantity_damaged: 'decimal:12,4 default:0', notes: 'text nullable', relationships: { belongsTo: 'InventoryRequest, InventoryItem', hasMany: InventoryItemSerial } }
