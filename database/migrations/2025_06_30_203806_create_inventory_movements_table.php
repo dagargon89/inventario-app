@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('inventory_movements', function (Blueprint $table) {
             $table->id();
-            $table->enum('type', ["['inbound'",""]);
+            $table->enum('type', ['inbound', 'outbound', 'transfer', 'adjustment']);
             $table->decimal('quantity', 12, 4);
             $table->decimal('quantity_before', 12, 4);
             $table->decimal('quantity_after', 12, 4);

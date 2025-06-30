@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('event_name');
             $table->date('event_date_start');
             $table->date('event_date_end');
-            $table->enum('status', ["['pending'",""])->default('pending');
+            $table->enum('status', ['pending', 'approved', 'dispatched', 'completed', 'cancelled'])->default('pending');
             $table->text('notes_requester')->nullable();
             $table->text('notes_approver')->nullable();
             $table->timestamp('approved_at')->nullable();

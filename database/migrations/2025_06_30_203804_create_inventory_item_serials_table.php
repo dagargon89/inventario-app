@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('inventory_item_serials', function (Blueprint $table) {
             $table->id();
             $table->string('serial_number')->unique();
-            $table->enum('status', ["['in_stock'",""])->default('in_stock');
+            $table->enum('status', ['in_stock', 'out_of_stock', 'reserved'])->default('in_stock');
             $table->foreignId('inventory_item_id');
             $table->foreignId('nullable_id');
             $table->timestamps();

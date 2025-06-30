@@ -17,8 +17,8 @@ return new class extends Migration
             $table->string('name');
             $table->text('description')->nullable();
             $table->string('unit_of_measure', 50);
-            $table->enum('status', ["['active'",""])->default('active');
-            $table->enum('tracking_type', ["['quantity'",""])->default('quantity');
+            $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->enum('tracking_type', ['quantity', 'serial'])->default('quantity');
             $table->json('attributes')->nullable();
             $table->timestamps();
             $table->softDeletes();
